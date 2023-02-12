@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -76,48 +75,44 @@ func main() {
 	defer db.Close()
 
 	// See "Important settings" section.
-	db.SetConnMaxLifetime(time.Minute * 3)
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(10)
-
-	_, err = db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", "asd", "sfb")
-	if err != nil {
-		log.Fatalf("db.Exec failed: %v", err)
-	}
+	// db.SetConnMaxLifetime(time.Minute * 3)
+	// db.SetMaxOpenConns(10)
+	// db.SetMaxIdleConns(10)
 
 	for i := 0; i < *maxClients; i++ {
 		firstName, lastName := genName()
 
-		// Get timestamp for histogram
-		now := time.Now()
-
-		err = insertAuthorToPostgres(dbpool, firstName, lastName)
+		err = insertAuthorToPostgres(dbpool, m, firstName, lastName)
 		if err != nil {
 			log.Fatalf("insertAuthor failed: %v", err)
 		}
 
-		// Record request duration
-		m.duration.With(prometheus.Labels{"db": "postgres", "operation": "write"}).Observe(time.Since(now).Seconds())
-
-		now = time.Now()
-
-		_, err = db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
+		err = insertAuthorToMysql(db, m, firstName, lastName)
 		if err != nil {
-			log.Fatalf("db.Exec failed: %v", err)
+			log.Fatalf("insertAuthor failed: %v", err)
 		}
 
-		// Record request duration
-		m.duration.With(prometheus.Labels{"db": "mysql", "operation": "write"}).Observe(time.Since(now).Seconds())
-
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Millisecond)
 	}
 
-	fmt.Println("finished")
 	select {}
 }
 
-func insertAuthorToPostgres(p *pgxpool.Pool, firstName string, lastName string) error {
+func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastName string) error {
+	now := time.Now()
+
 	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) VALUES($1,$2)", firstName, lastName)
+	m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write"}).Observe(time.Since(now).Seconds())
+
+	return err
+}
+
+func insertAuthorToMysql(db *sql.DB, m *metrics, firstName string, lastName string) error {
+	now := time.Now()
+
+	_, err := db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
+	m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write"}).Observe(time.Since(now).Seconds())
+
 	return err
 }
 
