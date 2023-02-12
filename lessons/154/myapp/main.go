@@ -25,6 +25,11 @@ var (
 	scaleInterval = flag.Int("scaleInterval", 100, "Scale interval in milliseconds")
 )
 
+type author struct {
+	firstName string
+	lastName  string
+}
+
 type metrics struct {
 	duration *prometheus.SummaryVec
 }
@@ -66,13 +71,13 @@ func main() {
 	dbUrl := "postgres://myapp:devops123@192.168.50.222:5432/benchmarks"
 	dbpool, err := pgxpool.New(context.Background(), dbUrl)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		log.Fatalf("Unable to connect to postgres database: %v", err)
 	}
 	defer dbpool.Close()
 
 	db, err := sql.Open("mysql", "myappv2:devops123@tcp(192.168.50.87:3306)/benchmarks")
 	if err != nil {
-		panic(err)
+		log.Fatalf("Unable to connect to mysql database: %v", err)
 	}
 	defer db.Close()
 
@@ -82,7 +87,7 @@ func main() {
 	// db.SetMaxIdleConns(10)
 
 	// Create job queue
-	var ch = make(chan string, *maxClients)
+	var ch = make(chan author, *maxClients)
 	var wg sync.WaitGroup
 
 	// Slowly increase the number of virtual clients
@@ -92,40 +97,48 @@ func main() {
 		for i := 0; i < clients; i++ {
 			go func() {
 				for {
-					_, ok := <-ch
+					author, ok := <-ch
 					if !ok {
 						// TODO: Fix negative counter
 						wg.Done()
 						return
 					}
-					firstName, lastName := genName()
-					insertAuthorToPostgres(dbpool, m, firstName, lastName)
-					insertAuthorToMysql(db, m, firstName, lastName)
+					insertAuthorToPostgres(dbpool, m, author.firstName, author.lastName)
 				}
 			}()
 		}
 
 		for i := 0; i < clients; i++ {
-			ch <- "test"
+			go func() {
+				for {
+					author, ok := <-ch
+					if !ok {
+						// TODO: Fix negative counter
+						wg.Done()
+						return
+					}
+					insertAuthorToMysql(db, m, author.firstName, author.lastName)
+				}
+			}()
+		}
+
+		for i := 0; i < clients; i++ {
+			firstName, lastName := genName()
+			ch <- author{firstName: firstName, lastName: lastName}
 		}
 		// TODO: make it dynamic
 		// Sleep for one second and increase number of clients
 		time.Sleep(time.Duration(*scaleInterval) * time.Millisecond)
 	}
 
-	// for i := 0; i < *maxClients; i++ {
-	// 	firstName, lastName := genName()
-
-	// 	insertAuthorToPostgres(dbpool, m, firstName, lastName)
-	// 	insertAuthorToMysql(db, m, firstName, lastName)
-
-	// 	time.Sleep(10 * time.Millisecond)
-	// }
-
 	select {}
 }
 
 func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastName string) {
+	// Sleep to avoid sending requests at the same time.
+	rn := rand.Intn(*scaleInterval)
+	time.Sleep(time.Duration(rn) * time.Millisecond)
+
 	now := time.Now()
 
 	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) VALUES($1,$2)", firstName, lastName)
@@ -136,6 +149,10 @@ func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastN
 }
 
 func insertAuthorToMysql(db *sql.DB, m *metrics, firstName string, lastName string) {
+	// Sleep to avoid sending requests at the same time.
+	rn := rand.Intn(*scaleInterval)
+	time.Sleep(time.Duration(rn) * time.Millisecond)
+
 	now := time.Now()
 
 	_, err := db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
