@@ -53,14 +53,7 @@ psql -h 192.168.50.222 -p 5432 -U myappv2 -d benchmarks
 
 \c benchmarks
 
-CREATE TABLE authors (
-    author_id  serial PRIMARY KEY,
-    first_name varchar(40) NOT NULL,
-    last_name  varchar(40) NOT NULL
-);
 
-GRANT ALL PRIVILEGES ON authors TO myapp;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO myapp;
 
 INSERT INTO authors(first_name, last_name)
 VALUES ('Olga', 'Savelieva');
@@ -72,3 +65,5 @@ https://learnsql.com/blog/sql-join-examples-with-explanations/
 
 Go Driver - https://github.com/jackc/pgx
 MysQL driver - https://go.dev/doc/database/
+
+DROP TABLE authors;

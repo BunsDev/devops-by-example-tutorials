@@ -3,3 +3,7 @@ CREATE TABLE authors (
     first_name varchar(40) NOT NULL,
     last_name  varchar(40) NOT NULL
 );
+
+GRANT ALL PRIVILEGES ON authors TO myapp;
+
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO myapp;

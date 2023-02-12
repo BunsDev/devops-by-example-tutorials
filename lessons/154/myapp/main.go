@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -14,6 +15,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+)
+
+var (
+	maxClients = flag.Int("maxClients", 100, "Maximum number of virtual clients")
 )
 
 type metrics struct {
@@ -38,6 +43,9 @@ func init() {
 }
 
 func main() {
+	// Parse the command line into the defined flags
+	flag.Parse()
+
 	// Create Prometheus registry
 	reg := prometheus.NewRegistry()
 	m := NewMetrics(reg)
@@ -58,7 +66,7 @@ func main() {
 	}
 	defer dbpool.Close()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < *maxClients; i++ {
 		firstName, lastName := genName()
 
 		// Get timestamp for histogram

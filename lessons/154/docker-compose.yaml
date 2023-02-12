@@ -3,10 +3,12 @@ version: "3"
 
 services:
 
-  rest-server:
+  myapp:
     build:
       context: ./myapp
       dockerfile: ../myapp/Dockerfile
+    entrypoint: /myapp
+    command: -maxClients 10
     ports:
     - 8080:8080
     - 9091:9091
