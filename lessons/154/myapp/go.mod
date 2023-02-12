@@ -2,7 +2,10 @@ module github.com/antonputra/tutorials/lessons/154/myapp
 
 go 1.19
 
-require github.com/jackc/pgx/v5 v5.3.0
+require (
+	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
+	github.com/jackc/pgx/v5 v5.3.0
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
