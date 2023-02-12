@@ -1,0 +1,10 @@
+---
+- name: Install Postgres
+  hosts: postgres
+  remote_user: aputra
+  become: yes
+  vars:
+    node_exporter_version: 1.5.0
+
+  roles:
+    - node-exporter
