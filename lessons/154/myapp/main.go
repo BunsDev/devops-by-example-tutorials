@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -20,7 +21,8 @@ import (
 )
 
 var (
-	maxClients = flag.Int("maxClients", 100, "Maximum number of virtual clients")
+	maxClients    = flag.Int("maxClients", 100, "Maximum number of virtual clients")
+	scaleInterval = flag.Int("scaleInterval", 100, "Scale interval in milliseconds")
 )
 
 type metrics struct {
@@ -79,41 +81,68 @@ func main() {
 	// db.SetMaxOpenConns(10)
 	// db.SetMaxIdleConns(10)
 
-	for i := 0; i < *maxClients; i++ {
-		firstName, lastName := genName()
+	// Create job queue
+	var ch = make(chan string, *maxClients)
+	var wg sync.WaitGroup
 
-		err = insertAuthorToPostgres(dbpool, m, firstName, lastName)
-		if err != nil {
-			log.Fatalf("insertAuthor failed: %v", err)
+	// Slowly increase the number of virtual clients
+	for clients := 0; clients <= *maxClients; clients++ {
+		wg.Add(1)
+
+		for i := 0; i < clients; i++ {
+			go func() {
+				for {
+					_, ok := <-ch
+					if !ok {
+						// TODO: Fix negative counter
+						wg.Done()
+						return
+					}
+					firstName, lastName := genName()
+					insertAuthorToPostgres(dbpool, m, firstName, lastName)
+					insertAuthorToMysql(db, m, firstName, lastName)
+				}
+			}()
 		}
 
-		err = insertAuthorToMysql(db, m, firstName, lastName)
-		if err != nil {
-			log.Fatalf("insertAuthor failed: %v", err)
+		for i := 0; i < clients; i++ {
+			ch <- "test"
 		}
-
-		time.Sleep(10 * time.Millisecond)
+		// TODO: make it dynamic
+		// Sleep for one second and increase number of clients
+		time.Sleep(time.Duration(*scaleInterval) * time.Millisecond)
 	}
+
+	// for i := 0; i < *maxClients; i++ {
+	// 	firstName, lastName := genName()
+
+	// 	insertAuthorToPostgres(dbpool, m, firstName, lastName)
+	// 	insertAuthorToMysql(db, m, firstName, lastName)
+
+	// 	time.Sleep(10 * time.Millisecond)
+	// }
 
 	select {}
 }
 
-func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastName string) error {
+func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastName string) {
 	now := time.Now()
 
 	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) VALUES($1,$2)", firstName, lastName)
+	if err != nil {
+		log.Fatalf("insertAuthorToPostgres failed: %v", err)
+	}
 	m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write"}).Observe(time.Since(now).Seconds())
-
-	return err
 }
 
-func insertAuthorToMysql(db *sql.DB, m *metrics, firstName string, lastName string) error {
+func insertAuthorToMysql(db *sql.DB, m *metrics, firstName string, lastName string) {
 	now := time.Now()
 
 	_, err := db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
+	if err != nil {
+		log.Fatalf("insertAuthorToMysql failed: %v", err)
+	}
 	m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write"}).Observe(time.Since(now).Seconds())
-
-	return err
 }
 
 func genName() (string, string) {
