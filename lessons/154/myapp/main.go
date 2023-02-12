@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -15,6 +16,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -32,7 +35,7 @@ func NewMetrics(reg prometheus.Registerer) *metrics {
 			Name:       "duration_seconds",
 			Help:       "Duration of the request.",
 			Objectives: map[float64]float64{0.9: 0.01, 0.99: 0.001},
-		}, []string{"db"}),
+		}, []string{"db", "operation"}),
 	}
 	reg.MustRegister(m.duration)
 	return m
@@ -66,6 +69,22 @@ func main() {
 	}
 	defer dbpool.Close()
 
+	db, err := sql.Open("mysql", "myappv2:devops123@tcp(192.168.50.87:3306)/benchmarks")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	// See "Important settings" section.
+	db.SetConnMaxLifetime(time.Minute * 3)
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(10)
+
+	_, err = db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", "asd", "sfb")
+	if err != nil {
+		log.Fatalf("db.Exec failed: %v", err)
+	}
+
 	for i := 0; i < *maxClients; i++ {
 		firstName, lastName := genName()
 
@@ -78,18 +97,27 @@ func main() {
 		}
 
 		// Record request duration
-		m.duration.With(prometheus.Labels{"db": "postgres"}).Observe(time.Since(now).Seconds())
+		m.duration.With(prometheus.Labels{"db": "postgres", "operation": "write"}).Observe(time.Since(now).Seconds())
+
+		now = time.Now()
+
+		_, err = db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
+		if err != nil {
+			log.Fatalf("db.Exec failed: %v", err)
+		}
+
+		// Record request duration
+		m.duration.With(prometheus.Labels{"db": "mysql", "operation": "write"}).Observe(time.Since(now).Seconds())
 
 		time.Sleep(1 * time.Second)
 	}
 
 	fmt.Println("finished")
 	select {}
-
 }
 
 func insertAuthorToPostgres(p *pgxpool.Pool, firstName string, lastName string) error {
-	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) values($1,$2)", firstName, lastName)
+	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) VALUES($1,$2)", firstName, lastName)
 	return err
 }
 

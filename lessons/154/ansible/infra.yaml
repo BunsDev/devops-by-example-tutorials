@@ -8,3 +8,13 @@
 
   roles:
     - node-exporter
+
+- name: Install MySQL
+  hosts: mysql
+  remote_user: aputra
+  become: yes
+  vars:
+    node_exporter_version: 1.5.0
+
+  roles:
+    - node-exporter

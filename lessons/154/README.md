@@ -1,6 +1,7 @@
 Mention
 
 - hosts, cpu/memory
+- latest versions
 
 
 If you google you find this, let's test it:
@@ -65,5 +66,63 @@ https://learnsql.com/blog/sql-join-examples-with-explanations/
 
 Go Driver - https://github.com/jackc/pgx
 MysQL driver - https://go.dev/doc/database/
+MySQL driver - https://github.com/go-sql-driver/mysql
 
 DROP TABLE authors;
+
+
+
+
+
+
+### Install MySQL
+
+MySQL examples - https://github.com/go-sql-driver/mysql/wiki/Examples
+
+sudo apt install mysql-server
+sudo systemctl status mysql
+
+sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf
+bind-address            = 0.0.0.0
+mysqlx-bind-address     = 0.0.0.0
+
+sudo systemctl restart mysql
+
+sudo mysql -u root
+
+CREATE DATABASE benchmarks;
+CREATE USER 'myapp'@'0.0.0.0' IDENTIFIED BY 'devops123';
+USE benchmarks;
+CREATE TABLE authors (
+    author_id  serial PRIMARY KEY,
+    first_name varchar(40) NOT NULL,
+    last_name  varchar(40) NOT NULL
+);
+
+
+
+
+CREATE USER 'myappv2'@'localhost' IDENTIFIED BY 'devops123';
+
+GRANT ALL PRIVILEGES ON *.* TO 'myappv2'@'localhost' WITH GRANT OPTION;
+
+
+
+CREATE USER 'myappv2'@'%' IDENTIFIED BY 'devops123';
+
+GRANT ALL PRIVILEGES ON *.* TO 'myappv2'@'%' WITH GRANT OPTION;
+
+FLUSH PRIVILEGES;
+
+
+
+
+
+
+100 * (1 - ((avg_over_time(node_memory_MemFree_bytes[10m]) + avg_over_time(node_memory_Cached_bytes[10m]) + avg_over_time(node_memory_Buffers_bytes[10m])) / avg_over_time(node_memory_MemTotal_bytes[10m])))
+
+node_memory_MemTotal_bytes - node_memory_MemFree_bytes
+
+100 - ((node_memory_MemAvailable_bytes{instance="192.168.50.222:9100"} * 100) / node_memory_MemTotal_bytes{instance="192.168.50.222:9100"})
+
+100 - ((node_memory_MemAvailable_bytes{instance="192.168.50.87:9100"} * 100) / node_memory_MemTotal_bytes{instance="192.168.50.87:9100"})

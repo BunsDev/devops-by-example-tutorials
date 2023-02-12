@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/prometheus/client_golang v1.14.0
 	golang.org/x/text v0.7.0

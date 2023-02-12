@@ -1,7 +1,7 @@
 ---
 global:
-  scrape_interval: 2s
-  evaluation_interval: 2s
+  scrape_interval: 5s
+  evaluation_interval: 5s
 
 scrape_configs:
   - job_name: myapp
@@ -9,3 +9,11 @@ scrape_configs:
     honor_labels: true
     static_configs:
       - targets: ["myapp:8081"]
+
+  - job_name: node-exporter
+    metrics_path: /metrics
+    honor_labels: true
+    static_configs:
+      - targets:
+          - 192.168.50.87:9100
+          - 192.168.50.222:9100
