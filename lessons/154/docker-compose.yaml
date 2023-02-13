@@ -8,7 +8,7 @@ services:
       context: ./myapp
       dockerfile: ../myapp/Dockerfile
     entrypoint: /myapp
-    command: -maxClients 3000 -scaleInterval 2000
+    command: -maxClients 50 -scaleInterval 1000
     ports:
     - 8080:8080
     - 9091:9091

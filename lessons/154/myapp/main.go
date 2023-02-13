@@ -41,7 +41,7 @@ func NewMetrics(reg prometheus.Registerer) *metrics {
 			Name:       "duration_seconds",
 			Help:       "Duration of the request.",
 			Objectives: map[float64]float64{0.9: 0.01, 0.99: 0.001},
-		}, []string{"db", "operation"}),
+		}, []string{"db", "operation", "status"}),
 	}
 	reg.MustRegister(m.duration)
 	return m
@@ -87,79 +87,59 @@ func main() {
 	// db.SetMaxIdleConns(10)
 
 	// Create job queue
-	var ch = make(chan author, *maxClients)
+	var ch = make(chan author, 100)
 	var wg sync.WaitGroup
+	wg.Add(5)
 
 	// Slowly increase the number of virtual clients
-	for clients := 0; clients <= *maxClients; clients++ {
-		wg.Add(1)
+	for clients := 0; clients <= 5; clients++ {
 
-		for i := 0; i < clients; i++ {
-			go func() {
-				for {
-					author, ok := <-ch
-					if !ok {
-						// TODO: Fix negative counter
-						wg.Done()
-						return
-					}
-					insertAuthorToPostgres(dbpool, m, author.firstName, author.lastName)
+		go func() {
+			for {
+				author, ok := <-ch
+				if !ok {
+					wg.Done()
+					return
 				}
-			}()
-		}
-
-		for i := 0; i < clients; i++ {
-			go func() {
-				for {
-					author, ok := <-ch
-					if !ok {
-						// TODO: Fix negative counter
-						wg.Done()
-						return
-					}
-					insertAuthorToMysql(db, m, author.firstName, author.lastName)
-				}
-			}()
-		}
-
-		for i := 0; i < clients; i++ {
-			firstName, lastName := genName()
-			ch <- author{firstName: firstName, lastName: lastName}
-		}
-		// TODO: make it dynamic
-		// Sleep for one second and increase number of clients
-		time.Sleep(time.Duration(*scaleInterval) * time.Millisecond)
+				insertAuthorToPostgres(dbpool, m, author.firstName, author.lastName)
+				insertAuthorToMysql(db, m, author.firstName, author.lastName)
+			}
+		}()
 	}
 
-	select {}
+	for {
+		// Sleep to avoid sending requests at the same time.
+		rn := rand.Intn(10)
+		time.Sleep(time.Duration(rn) * time.Millisecond)
+
+		firstName, lastName := genName()
+		ch <- author{firstName: firstName, lastName: lastName}
+	}
 }
 
 func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastName string) {
-	// Sleep to avoid sending requests at the same time.
-	rn := rand.Intn(*scaleInterval)
-	time.Sleep(time.Duration(rn) * time.Millisecond)
-
 	now := time.Now()
 
 	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) VALUES($1,$2)", firstName, lastName)
 	if err != nil {
-		log.Fatalf("insertAuthorToPostgres failed: %v", err)
+		log.Printf("insertAuthorToPostgres failed: %v", err)
+		m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write", "status": "failed"}).Observe(time.Since(now).Seconds())
+		return
 	}
-	m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write"}).Observe(time.Since(now).Seconds())
+	m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write", "status": "success"}).Observe(time.Since(now).Seconds())
 }
 
 func insertAuthorToMysql(db *sql.DB, m *metrics, firstName string, lastName string) {
-	// Sleep to avoid sending requests at the same time.
-	rn := rand.Intn(*scaleInterval)
-	time.Sleep(time.Duration(rn) * time.Millisecond)
 
 	now := time.Now()
 
 	_, err := db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
 	if err != nil {
-		log.Fatalf("insertAuthorToMysql failed: %v", err)
+		log.Printf("insertAuthorToMysql failed: %v", err)
+		m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write", "status": "failed"}).Observe(time.Since(now).Seconds())
+		return
 	}
-	m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write"}).Observe(time.Since(now).Seconds())
+	m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write", "status": "success"}).Observe(time.Since(now).Seconds())
 }
 
 func genName() (string, string) {
