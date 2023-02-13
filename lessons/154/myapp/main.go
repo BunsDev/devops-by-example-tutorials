@@ -88,12 +88,12 @@ func main() {
 
 	// Create job queue
 	var ch = make(chan author, 100)
+	var reads = make(chan int, 100)
 	var wg sync.WaitGroup
 	wg.Add(5)
 
 	// Slowly increase the number of virtual clients
 	for clients := 0; clients <= 5; clients++ {
-
 		go func() {
 			for {
 				author, ok := <-ch
@@ -107,14 +107,54 @@ func main() {
 		}()
 	}
 
+	for clients := 0; clients <= 5; clients++ {
+		go func() {
+			for {
+				id, ok := <-reads
+				if !ok {
+					wg.Done()
+					return
+				}
+				getAuthorFromPostgres(dbpool, m, id)
+				getAuthorFromMysql(db, m, id)
+			}
+		}()
+	}
+
+	currentInserts := 0
+	numberOfInserts := 50000
+
 	for {
+		currentInserts++
 		// Sleep to avoid sending requests at the same time.
 		rn := rand.Intn(10)
 		time.Sleep(time.Duration(rn) * time.Millisecond)
 
 		firstName, lastName := genName()
 		ch <- author{firstName: firstName, lastName: lastName}
+
+		if currentInserts == numberOfInserts {
+			break
+		}
 	}
+
+	currentReads := 0
+
+	for {
+		currentReads++
+		// Sleep to avoid sending requests at the same time.
+		rn := rand.Intn(10)
+		time.Sleep(time.Duration(rn) * time.Millisecond)
+
+		reads <- currentReads
+
+		if currentReads == numberOfInserts {
+			break
+		}
+	}
+
+	close(ch)
+	wg.Wait()
 }
 
 func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastName string) {
@@ -123,23 +163,45 @@ func insertAuthorToPostgres(p *pgxpool.Pool, m *metrics, firstName string, lastN
 	_, err := p.Exec(context.Background(), "INSERT INTO authors(first_name,last_name) VALUES($1,$2)", firstName, lastName)
 	if err != nil {
 		log.Printf("insertAuthorToPostgres failed: %v", err)
-		m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write", "status": "failed"}).Observe(time.Since(now).Seconds())
 		return
 	}
 	m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "write", "status": "success"}).Observe(time.Since(now).Seconds())
 }
 
 func insertAuthorToMysql(db *sql.DB, m *metrics, firstName string, lastName string) {
-
 	now := time.Now()
 
 	_, err := db.Exec("INSERT INTO authors(first_name,last_name) VALUES(?,?)", firstName, lastName)
 	if err != nil {
 		log.Printf("insertAuthorToMysql failed: %v", err)
-		m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write", "status": "failed"}).Observe(time.Since(now).Seconds())
 		return
 	}
 	m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "write", "status": "success"}).Observe(time.Since(now).Seconds())
+}
+
+func getAuthorFromPostgres(p *pgxpool.Pool, m *metrics, id int) {
+	now := time.Now()
+
+	var firstName string
+	var lastName string
+	err := p.QueryRow(context.Background(), "SELECT first_name,last_name FROM authors WHERE author_id = $1", id).Scan(&firstName, &lastName)
+	if err != nil {
+		log.Printf("getAuthorFromPostgres failed: %v", err)
+	}
+	m.duration.With(prometheus.Labels{"db": "PostgreSQL", "operation": "read", "status": "success"}).Observe(time.Since(now).Seconds())
+}
+
+func getAuthorFromMysql(db *sql.DB, m *metrics, id int) {
+	now := time.Now()
+
+	var firstName string
+	var lastName string
+	err := db.QueryRow("SELECT first_name,last_name FROM authors WHERE author_id = ?", id).Scan(&firstName, &lastName)
+	if err != nil {
+		log.Printf("getAuthorFromMysql failed: %v", err)
+		return
+	}
+	m.duration.With(prometheus.Labels{"db": "MySQL", "operation": "read", "status": "success"}).Observe(time.Since(now).Seconds())
 }
 
 func genName() (string, string) {

@@ -69,6 +69,12 @@ MysQL driver - https://go.dev/doc/database/
 MySQL driver - https://github.com/go-sql-driver/mysql
 
 DROP TABLE authors;
+CREATE TABLE authors (
+    author_id  serial PRIMARY KEY,
+    first_name varchar(40) NOT NULL,
+    last_name  varchar(40) NOT NULL
+);
+SELECT count(*) FROM authors;
 
 
 
@@ -126,3 +132,9 @@ node_memory_MemTotal_bytes - node_memory_MemFree_bytes
 100 - ((node_memory_MemAvailable_bytes{instance="192.168.50.222:9100"} * 100) / node_memory_MemTotal_bytes{instance="192.168.50.222:9100"})
 
 100 - ((node_memory_MemAvailable_bytes{instance="192.168.50.87:9100"} * 100) / node_memory_MemTotal_bytes{instance="192.168.50.87:9100"})
+
+SELECT first_name,last_name FROM authors WHERE author_id = 1;
+
+PG pool config
+https://github.com/jackc/pgx/blob/4fc4f9a60337af3bd7c6abdf6c71460712d112fc/pgxpool/doc.go
+https://github.com/jackc/pgx/blob/master/examples/url_shortener/main.go
