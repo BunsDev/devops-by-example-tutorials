@@ -13,6 +13,11 @@ resource "helm_release" "grafana" {
   }
 
   set {
+    name  = "adminPassword"
+    value = "devops123"
+  }
+
+  set {
     name  = "persistence.enabled"
     value = "true"
   }

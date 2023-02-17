@@ -13,6 +13,11 @@ data "helm_template" "grafana" {
   }
 
   set {
+    name  = "adminPassword"
+    value = "devops123"
+  }
+
+  set {
     name  = "persistence.enabled"
     value = "true"
   }
@@ -29,4 +34,3 @@ resource "local_file" "grafana_manifests" {
   filename = "target/${each.key}"
   content  = each.value
 }
-

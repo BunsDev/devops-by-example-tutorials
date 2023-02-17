@@ -65,4 +65,29 @@ terraform init
 terraform apply
 create 13-grafana.tf
 
-helm list -A
+helm list -n monitoring
+
+kubectl get pods -n monitoring
+kubectl get secrets -n monitoring
+kubectl get secrets grafana -o yaml -n monitoring
+echo "YWRtaW4=" | base64 -d
+echo "RjlFYldsYlgzSkdhekYyd2dlMEdaYllldllMb2RIQW4wUmFhalp1Ug==" | base64 -d
+F9EbWlbX3JGazF2wge0GZbYevYLodHAn0RaajZuR
+
+kubectl get svc -n monitoring
+kubectl port-forward svc/grafana 3000:80 -n monitoring
+
+create data source
+http://prometheus-operated.monitoring:9090
+
+create dashboard
+rate(tester_duration_seconds_count[1m])
+{{path}}
+requests per seconds
+panel name: Traffic
+
+
+## Additional scrape configs
+
+create ec2 with node exporter
+create 14-ec2.tf
