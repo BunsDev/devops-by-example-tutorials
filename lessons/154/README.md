@@ -20,6 +20,11 @@ kubectl logs -l app.kubernetes.io/name=prometheus-operator -n monitoring -f
 kubectl apply -f prometheus
 kubectl get pods -n monitoring
 kubectl logs -l app.kubernetes.io/name=prometheus -n monitoring -f
+kubectl get services -n monitoring
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
 
 
 3. Deploy Sample App
+
+kubectl apply -f myapp/deploy
+kubectl apply -f myapp/deploy/pod-monitor.yaml
