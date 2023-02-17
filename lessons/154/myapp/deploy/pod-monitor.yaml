@@ -9,9 +9,10 @@ metadata:
 spec:
   namespaceSelector:
     matchNames:
-      - monitoring
+      - staging
   selector:
     matchLabels:
       name: myapp
   podMetricsEndpoints:
     - port: http-metrics
+      path: /metrics
