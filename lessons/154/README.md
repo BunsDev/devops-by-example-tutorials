@@ -111,3 +111,5 @@ kubectl apply -f prometheus/additional-scrape-configs.yaml
 kubectl apply -f prometheus/prometheus.yaml
 k delete pod prometheus-main-0 -n monitoring
 kubectl port-forward svc/prometheus-operated 9090 -n monitoring
+
+## Probe
