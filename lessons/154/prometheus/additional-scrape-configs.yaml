@@ -11,7 +11,7 @@ stringData:
       - region: us-east-1
         port: 9100
         filters:
-        - name: tag:prometheus-node-exporter
+        - name: tag:node-exporter
           values:
           - true
       relabel_configs:

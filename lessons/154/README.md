@@ -106,6 +106,7 @@ update service account
     eks.amazonaws.com/role-arn: "arn:aws:iam::<acc-id>:role/prometheus-demo"
 
 
+kubectl apply -f prometheus/service-account.yaml
 kubectl apply -f prometheus/additional-scrape-configs.yaml
 kubectl apply -f prometheus/prometheus.yaml
 k delete pod prometheus-main-0 -n monitoring

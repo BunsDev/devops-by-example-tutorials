@@ -6,7 +6,7 @@ data "aws_iam_policy_document" "prometheus" {
     condition {
       test     = "StringEquals"
       variable = "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub"
-      values   = ["system:serviceaccount:prometheus:monitoring"]
+      values   = ["system:serviceaccount:monitoring:prometheus"]
     }
 
     principals {
@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "prometheus" {
 }
 
 resource "aws_iam_role" "prometheus" {
-  assume_role_policy = data.aws_iam_policy_document.csi.json
+  assume_role_policy = data.aws_iam_policy_document.prometheus.json
   name               = "prometheus"
 }
 
