@@ -10,3 +10,4 @@ aws eks update-kubeconfig --name demo --region us-east-1
 
 2. Install Prometheus Operator
 kubectl apply --server-side -f prometheus-operator/crds
+kubectl apply -f prometheus-operator/rbac/cluster-roles.yaml
