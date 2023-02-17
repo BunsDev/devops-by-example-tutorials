@@ -50,3 +50,19 @@ kubectl get endpoints -n staging
 kubectl describe endpoints myapp-prom -n staging
 
 kubectl apply -f myapp/deploy/service-monitor.yaml
+
+7. Deploy Grafana using Helm
+
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm search repo grafana
+helm search repo grafana
+helm show values grafana/grafana --version 6.50.7
+helm show values grafana/grafana --version 6.50.7 > grafana-values.yaml
+create 11-helm-provider.tf
+create 12-grafana-render.tf
+terraform init
+terraform apply
+create 13-grafana.tf
+
+helm list -A
