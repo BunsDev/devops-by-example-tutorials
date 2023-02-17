@@ -1,41 +1,32 @@
-# data "helm_template" "grafana" {
-#   repository       = "https://grafana.github.io/helm-charts"
-#   chart            = "grafana"
-#   namespace        = "monitoring"
-#   create_namespace = true
-#   version          = "6.50.7"
+data "helm_template" "grafana" {
+  name = "grafana"
 
-#   set {
-#     name  = "image.tag"
-#     value = "9.3.6"
-#   }
+  repository       = "https://grafana.github.io/helm-charts"
+  chart            = "grafana"
+  namespace        = "monitoring"
+  create_namespace = true
+  version          = "6.50.7"
 
-#   set {
-#     name  = "persistence.enabled"
-#     value = "true"
-#   }
+  set {
+    name  = "image.tag"
+    value = "9.3.6"
+  }
 
-#   set {
-#     name  = "persistence.size"
-#     value = "8Gi"
-#   }
-# }
+  set {
+    name  = "persistence.enabled"
+    value = "true"
+  }
 
-# resource "local_file" "mariadb_manifests" {
-#   for_each = data.helm_template.grafana.manifests
+  set {
+    name  = "persistence.size"
+    value = "8Gi"
+  }
+}
 
-#   filename = "./${each.key}"
-#   content  = each.value
-# }
+resource "local_file" "grafana_manifests" {
+  for_each = data.helm_template.grafana.manifests
 
-# output "grafana_manifest" {
-#   value = data.helm_template.grafana.manifest
-# }
+  filename = "target/${each.key}"
+  content  = each.value
+}
 
-# output "grafana_manifests" {
-#   value = data.helm_template.grafana.manifests
-# }
-
-# output "grafana_notes" {
-#   value = data.helm_template.grafana.notes
-# }
