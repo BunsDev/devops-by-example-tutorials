@@ -113,3 +113,4 @@ k delete pod prometheus-main-0 -n monitoring
 kubectl port-forward svc/prometheus-operated 9090 -n monitoring
 
 ## Probe
+deploy back box exporter

@@ -13,10 +13,16 @@ spec:
   podMonitorSelector:
     matchLabels:
       prometheus: main
+  probeSelector:
+    matchLabels:
+      prometheus: main
   serviceMonitorNamespaceSelector:
     matchLabels:
       monitoring: prometheus
   podMonitorNamespaceSelector:
+    matchLabels:
+      monitoring: prometheus
+  probeNamespaceSelector:
     matchLabels:
       monitoring: prometheus
   resources:
