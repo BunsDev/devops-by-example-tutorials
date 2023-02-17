@@ -30,6 +30,9 @@ spec:
   logLevel: info
   logFormat: logfmt
   scrapeInterval: 15s
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
   securityContext:
     fsGroup: 0
     runAsNonRoot: false

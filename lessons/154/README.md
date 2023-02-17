@@ -91,3 +91,22 @@ panel name: Traffic
 
 create ec2 with node exporter
 create 14-ec2.tf
+
+create 15-prometheus-iam.tf
+
+create additional-scrape-configs.yaml
+
+update
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
+
+update service account
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::<acc-id>:role/prometheus-demo"
+
+
+kubectl apply -f prometheus/additional-scrape-configs.yaml
+kubectl apply -f prometheus/prometheus.yaml
+k delete pod prometheus-main-0 -n monitoring
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
