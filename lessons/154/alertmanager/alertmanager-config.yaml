@@ -1,0 +1,30 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: main
+  namespace: monitoring
+  labels:
+    alertmanager: main
+spec:
+  route:
+    groupBy: ["alertname"]
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    receiver: slack-notifications
+    routes:
+      - receiver: slack-notifications
+        match:
+          severity: warning
+  receivers:
+    - name: slack-notifications
+      slackConfigs:
+        - channel: "#alerts"
+          sendResolved: true
+          apiURL:
+            name: slack
+            key: slack-url
+          title: "{{ .GroupLabels.alertname }}"
+          text: "{{ range .Alerts }}{{ .Annotations.message }}\n{{ end }}"
+          footer: "Runbook: {{ .CommonAnnotations.runbook_url }}"

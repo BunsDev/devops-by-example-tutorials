@@ -114,3 +114,12 @@ kubectl port-forward svc/prometheus-operated 9090 -n monitoring
 
 ## Probe
 deploy back box exporter
+
+
+## Create Alertmanager with Slack integration
+add
+  alerting:
+    alertmanagers:
+      - namespace: monitoring
+        name: alertmanager-operated
+        port: web

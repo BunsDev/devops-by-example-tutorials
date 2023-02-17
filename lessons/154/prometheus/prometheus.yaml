@@ -6,6 +6,11 @@ metadata:
   namespace: monitoring
 spec:
   version: v2.42.0
+  alerting:
+    alertmanagers:
+      - namespace: monitoring
+        name: alertmanager-operated
+        port: web
   serviceAccountName: prometheus
   serviceMonitorSelector:
     matchLabels:
