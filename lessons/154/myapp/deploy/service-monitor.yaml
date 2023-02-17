@@ -1,6 +1,6 @@
 ---
 apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
+kind: ServiceMonitor
 metadata:
   name: myapp
   namespace: staging
@@ -12,7 +12,7 @@ spec:
       - staging
   selector:
     matchLabels:
-      app: myapp
-  podMetricsEndpoints:
+      app: myapp-monitoring
+  endpoints:
     - port: http-metrics
       path: /metrics

@@ -1,3 +1,7 @@
+Intro
+
+- show prometheus labels and podmonitor/servicemonitor labels. How to match
+
 The purpose of this project is to simplify and automate the configuration of a Prometheus based monitoring stack for Kubernetes clusters.
 
 kubectl apply --server-side
@@ -28,3 +32,21 @@ kubectl port-forward svc/prometheus-operated 9090 -n monitoring
 
 kubectl apply -f myapp/deploy
 kubectl apply -f myapp/deploy/pod-monitor.yaml
+
+4. Show metrics in Prometheus Explorer
+
+tester_duration_seconds{quantile="0.99"}
+tester_duration_seconds_count
+rate(tester_duration_seconds_count[1m])
+
+5. Remove pod monitor
+kubectl delete -f myapp/deploy/pod-monitor.yaml
+check that there now targets (config is empty)
+
+6. Create servicemonitor
+kubectl apply -f myapp/deploy/prom-service.yaml
+kubectl get svc -n staging
+kubectl get endpoints -n staging
+kubectl describe endpoints myapp-prom -n staging
+
+kubectl apply -f myapp/deploy/service-monitor.yaml

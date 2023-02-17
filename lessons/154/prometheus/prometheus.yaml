@@ -9,10 +9,10 @@ spec:
   serviceAccountName: prometheus
   serviceMonitorSelector:
     matchLabels:
-      component: main
+      prometheus: main
   podMonitorSelector:
     matchLabels:
-      component: main
+      prometheus: main
   serviceMonitorNamespaceSelector:
     matchLabels:
       monitoring: prometheus
