@@ -123,3 +123,13 @@ add
       - namespace: monitoring
         name: alertmanager-operated
         port: web
+
+
+
+
+
+
+
+
+
+1. Create EKS cluster
