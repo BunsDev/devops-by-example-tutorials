@@ -12,6 +12,9 @@ spec:
         name: alertmanager-operated
         port: web
   serviceAccountName: prometheus
+  ruleSelector:
+    matchLabels:
+      prometheus: main
   serviceMonitorSelector:
     matchLabels:
       prometheus: main

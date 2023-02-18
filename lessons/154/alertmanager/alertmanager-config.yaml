@@ -25,6 +25,4 @@ spec:
           apiURL:
             name: slack
             key: slack-url
-          title: "{{ .GroupLabels.alertname }}"
-          text: "{{ range .Alerts }}{{ .Annotations.message }}\n{{ end }}"
-          footer: "Runbook: {{ .CommonAnnotations.runbook_url }}"
+          text: "{{ range .Alerts }}<!channel> {{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"
