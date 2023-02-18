@@ -85,8 +85,8 @@ systemctl start node_exporter
 EOF
 
   tags = {
-    Name          = "test"
-    service       = "test"
+    Name          = "myapp"
+    service       = "myapp"
     node-exporter = "true"
   }
 }
