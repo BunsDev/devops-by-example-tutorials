@@ -130,6 +130,11 @@ add
 
 
 
-
+####### Start #######
 
 1. Create EKS cluster
+go over terraform code - vpc & eks
+cd terraform
+terraform init
+terraform apply
+aws eks update-kubeconfig --name demo --region us-east-1
