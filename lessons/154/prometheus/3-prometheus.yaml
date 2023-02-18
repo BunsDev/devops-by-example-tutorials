@@ -6,34 +6,11 @@ metadata:
   namespace: monitoring
 spec:
   version: v2.42.0
-  alerting:
-    alertmanagers:
-      - namespace: monitoring
-        name: alertmanager-operated
-        port: web
   serviceAccountName: prometheus
-  ruleSelector:
-    matchLabels:
-      prometheus: main
-  serviceMonitorSelector:
-    matchLabels:
-      prometheus: main
   podMonitorSelector:
     matchLabels:
       prometheus: main
-  probeSelector:
-    matchLabels:
-      prometheus: main
-  serviceMonitorNamespaceSelector:
-    matchLabels:
-      monitoring: prometheus
   podMonitorNamespaceSelector:
-    matchLabels:
-      monitoring: prometheus
-  probeNamespaceSelector:
-    matchLabels:
-      monitoring: prometheus
-  ruleNamespaceSelector:
     matchLabels:
       monitoring: prometheus
   resources:
@@ -47,9 +24,6 @@ spec:
   logLevel: info
   logFormat: logfmt
   scrapeInterval: 15s
-  additionalScrapeConfigs:
-    name: additional-scrape-configs
-    key: prometheus-additional.yaml
   securityContext:
     fsGroup: 0
     runAsNonRoot: false
