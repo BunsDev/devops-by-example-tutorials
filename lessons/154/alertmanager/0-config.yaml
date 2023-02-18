@@ -25,5 +25,5 @@ stringData:
       slack_configs:
       - channel: "#alerts"
         send_resolved: true
-        api_url: "https://hooks.slack.com/services/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"
+        api_url: "https://hooks.slack.com/services/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"
         text: "{{ range .Alerts }}<!channel> {{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"

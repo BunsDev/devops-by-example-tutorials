@@ -249,3 +249,55 @@ kubectl apply -f prometheus/3-prometheus.yaml
 kubectl delete pod prometheus-main-0 -n monitoring
 kubectl port-forward svc/prometheus-operated 9090 -n monitoring
 open prometheus targets
+
+## Probe
+go over blackbox-exporter
+kubectl apply -f blackbox-exporter
+kubectl get pods -n monitoring
+go over probe.yaml
+update prometheus.yaml
+  probeSelector:
+    matchLabels:
+      prometheus: main
+  probeNamespaceSelector:
+    matchLabels:
+      monitoring: prometheus
+
+kubectl apply -f prometheus/3-prometheus.yaml
+kubectl delete pod prometheus-main-0 -n monitoring
+kubectl apply -f probe.yaml
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
+open targets
+query 
+probe_
+probe_http_status_code
+
+## Create Alertmanager with Slack integration
+create alerts private channel
+create prometheus slack app
+go over alertmanager
+update slack_url
+kubectl apply -f alertmanager
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+
+update prometheus
+  alerting:
+    alertmanagers:
+      - namespace: monitoring
+        name: alertmanager-operated
+        port: web
+  ruleSelector:
+    matchLabels:
+      prometheus: main
+  ruleNamespaceSelector:
+    matchLabels:
+      monitoring: prometheus
+
+kubectl apply -f prometheus/3-prometheus.yaml
+kubectl delete pod prometheus-main-0 -n monitoring
+open alert.yaml
+kubectl apply -f alert.yaml
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
+open alerts
+stop ec2 instance
