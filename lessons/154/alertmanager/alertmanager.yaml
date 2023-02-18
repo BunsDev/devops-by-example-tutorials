@@ -6,10 +6,7 @@ metadata:
   name: main
 spec:
   replicas: 1
-  logLevel: info
-  alertmanagerConfigSelector:
-    matchLabels:
-      alertmanager: main
+  logLevel: debug
   resources:
     requests:
       cpu: 200m
