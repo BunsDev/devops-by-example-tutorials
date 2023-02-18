@@ -13,6 +13,12 @@ spec:
   podMonitorNamespaceSelector:
     matchLabels:
       monitoring: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      prometheus: main
+  serviceMonitorNamespaceSelector:
+    matchLabels:
+      monitoring: prometheus
   resources:
     requests:
       cpu: 500m

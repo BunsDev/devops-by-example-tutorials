@@ -132,9 +132,97 @@ add
 
 ####### Start #######
 
-1. Create EKS cluster
+## Create EKS cluster
 go over terraform code - vpc & eks
 cd terraform
 terraform init
 terraform apply
 aws eks update-kubeconfig --name demo --region us-east-1
+kubectl get svc
+
+## Install Prometheus Operator
+go to official prometheus operator github and show crds and examples (switch based on version)
+open prometheus-operator/namespace.yaml 
+explain "monitoring: prometheus" label
+cd ..
+kubectl apply -f prometheus-operator/namespace.yaml
+go over crds
+kubectl apply --server-side -f prometheus-operator/crds
+kubectl get crds
+open prometheus-operator/rbac
+kubectl apply -f prometheus-operator/rbac
+open prometheus-operator/deployment
+kubectl apply -f prometheus-operator/deployment
+kubectl get pods -n monitoring
+kubectl logs -l app.kubernetes.io/name=prometheus-operator -n monitoring -f
+
+## Deploy Prometheus
+open prometheus
+kubectl apply -f prometheus
+kubectl get pods -n monitoring
+kubectl logs -l app.kubernetes.io/name=prometheus -n monitoring -f
+kubectl get services -n monitoring
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
+open http://localhost:9090
+go to targets and configuration
+
+## Deploy Sample App
+go over go code
+go over deploy folder
+kubectl apply -f myapp/deploy
+kubectl get pods -n staging
+kubectl get podmonitor -n staging
+go to prometheus configuration
+go to prometheus targets
+tester_duration_seconds{quantile="0.99"}
+tester_duration_seconds_count (go to graph - 5m interval)
+rate(tester_duration_seconds_count[1m])
+
+delete podmonitor
+kubectl delete -f myapp/deploy/3-pod-monitor.yaml
+verify in prometheus targets and configuration
+create deploy/4-prom-service.yaml
+kubectl apply -f myapp/deploy/4-prom-service.yaml
+kubectl get endpoints -n staging
+kubectl describe endpoints myapp-prom -n staging
+create 5-service-monitor.yaml
+update prometheus/3-prometheus.yaml
+
+  serviceMonitorSelector:
+    matchLabels:
+      prometheus: main
+  serviceMonitorNamespaceSelector:
+    matchLabels:
+      monitoring: prometheus
+kubectl apply -f prometheus/3-prometheus.yaml
+kubectl apply -f myapp/deploy/5-service-monitor.yaml
+kubectl delete pod prometheus-main-0 -n monitoring
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
+
+## Deploy Grafana using Helm
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm search repo grafana
+helm show values grafana/grafana --version 6.50.7
+helm show values grafana/grafana --version 6.50.7 > grafana-values.yaml
+create 11-helm-provider.tf
+create 12-grafana-render.tf
+terraform init
+terraform apply
+open target/templates
+create 13-grafana.tf
+terraform apply
+helm list -n monitoring
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+kubectl port-forward svc/grafana 3000:80 -n monitoring
+open http://localhost:3000
+
+create data source
+http://prometheus-operated.monitoring:9090
+
+create dashboard
+rate(tester_duration_seconds_count[1m])
+{{path}}
+requests per seconds
+panel name: Traffic
