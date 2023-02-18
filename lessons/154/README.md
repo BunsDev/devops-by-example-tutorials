@@ -226,3 +226,26 @@ rate(tester_duration_seconds_count[1m])
 {{path}}
 requests per seconds
 panel name: Traffic
+
+## Additional scrape configs
+create 14-ec2.tf
+create 15-prometheus-iam.tf
+terraform apply
+get arn from aws console
+update service account
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::424432388155:role/prometheus"
+create 4-additional-scrape-configs.yaml
+
+update prometheus
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
+
+cd ..
+kubectl apply -f prometheus/0-service-account.yaml
+kubectl apply -f prometheus/4-additional-scrape-configs.yaml
+kubectl apply -f prometheus/3-prometheus.yaml
+kubectl delete pod prometheus-main-0 -n monitoring
+kubectl port-forward svc/prometheus-operated 9090 -n monitoring
+open prometheus targets

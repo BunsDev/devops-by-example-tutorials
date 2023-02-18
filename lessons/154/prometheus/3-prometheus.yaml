@@ -19,6 +19,9 @@ spec:
   serviceMonitorNamespaceSelector:
     matchLabels:
       monitoring: prometheus
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
   resources:
     requests:
       cpu: 500m
